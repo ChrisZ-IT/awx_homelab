@@ -1,7 +1,7 @@
 # awx_homelab
 My homelab k8s deployment of awx
 
-My quick notes on how deployed this. I plan to come back later and clean this up a bit. This deployment uses istio ingress gateway. I deployed istio ingress gateway in my cluster to learn how to use it. This was my project to learn how to use it.
+My quick notes on how I deployed this. I plan to come back later and clean this up a bit. This deployment uses istio ingress gateway. I deployed istio ingress gateway in my cluster to learn how to use it. This was the deployment I used to learn how to use istio.
 
 1. Install the awx operator helm chart
     https://github.com/ansible-community/awx-operator-helm
