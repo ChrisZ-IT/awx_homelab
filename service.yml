@@ -1,0 +1,37 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: awx-gateway
+  namespace: awx
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: awx-server-certs
+    hosts:
+    - ansible.domain.local
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: awx-virtualservice
+  namespace: awx
+spec:
+  hosts:
+  - ansible.domain.local
+  gateways:
+  - awx-gateway
+  http:
+  - route:
+    - destination:
+        host: ansible-awx-service
+        port:
+          number: 80
+
