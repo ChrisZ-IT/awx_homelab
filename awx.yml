@@ -1,3 +1,4 @@
+---
 apiVersion: awx.ansible.com/v1beta1
 kind: AWX
 metadata:
@@ -7,6 +8,7 @@ metadata:
     sidecar.istio.io/inject: "true"
 spec:
   service_type: ClusterIP
-  ingress_type: none
-  postgres_storage_class: local-storage
-
+  postgres_storage_class: nfs-storage
+  postgres_storage_requirements:
+    requests:
+      storage: 10Gi

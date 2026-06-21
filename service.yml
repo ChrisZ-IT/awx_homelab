@@ -34,4 +34,3 @@ spec:
         host: ansible-awx-service
         port:
           number: 80
-
