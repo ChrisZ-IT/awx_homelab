@@ -1,0 +1,21 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: awx-cert-request
+  namespace: istio-ingress
+spec:
+  secretName: awx-cert-request
+  duration: 2160h
+  renewBefore: 48h
+  privateKey:
+    rotationPolicy: Always
+  commonName: ansible.${DOMAIN_NAME}
+  dnsNames:
+    - ansible.${DOMAIN_NAME}
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
