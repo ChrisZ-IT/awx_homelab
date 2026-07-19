@@ -18,3 +18,12 @@ My quick notes on how I deployed this(and some troubleshooting steps I had to do
         - Resolve any issues you find/delete them(I assume you know what you are doing here)
     - If helm does not deploy the awx resource you can modify and apply `awx.yml`
 4. Modify `service.yml` with your FQDN and apply once the `ansible-awx-service` is up and it has endpoints attached to it
+
+Im also using envsubst to set `DOMAIN_NAME` ENV var in my manifests
+example:
+
+```
+export DOMAIN_NAME=domain.local
+envsubst < certificate.yml | k apply -f -
+envsubst < service.yml | k apply -f -
+```

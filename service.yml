@@ -14,9 +14,9 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: awx-server-certs
+      credentialName: awx-cert-request
     hosts:
-    - ansible.domain.local
+    - ansible.${DOMAIN_NAME}
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -25,7 +25,7 @@ metadata:
   namespace: awx
 spec:
   hosts:
-  - ansible.domain.local
+  - ansible.${DOMAIN_NAME}
   gateways:
   - awx-gateway
   http:
