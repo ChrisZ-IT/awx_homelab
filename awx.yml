@@ -1,0 +1,23 @@
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: ansible-awx
+  namespace: awx
+  labels:
+    sidecar.istio.io/inject: "true"
+spec:
+  web_replicas: 2
+  task_replicas: 2
+  service_type: ClusterIP
+  postgres_storage_class: nfs-storage
+  postgres_storage_requirements:
+    requests:
+      storage: 10Gi
+  topology_spread_constraints: |
+    - maxSkew: 1
+      topologyKey: "kubernetes.io/hostname"
+      whenUnsatisfiable: "ScheduleAnyway"
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/part-of: "ansible-awx"
