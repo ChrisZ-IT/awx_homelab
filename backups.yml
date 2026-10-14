@@ -1,0 +1,76 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: awx-daily-backups
+  namespace: awx
+spec:
+  schedule: "0 12 * * *"
+  timeZone: America/Denver
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: awx-operator-controller-manager
+          restartPolicy: OnFailure
+          containers:
+          - name: backup-and-clean
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              NAMESPACE="awx"
+              DEPLOYMENT="ansible-awx"
+              SHARED_PVC="awx-backups-pvc"
+              RETENTION_DAYS=30
+
+              # -------------------------------------------------------------
+              # STEP 1: TRIGGER NEW BACKUP
+              # -------------------------------------------------------------
+              BACKUP_NAME="awx-backup-$(date +%Y-%m-%d-%H%M)"
+              echo "INFO: Initializing daily AWX Backup: ${BACKUP_NAME}"
+
+              cat <<EOF | kubectl apply -f -
+              apiVersion: awx.ansible.com/v1beta1
+              kind: AWXBackup
+              metadata:
+                name: ${BACKUP_NAME}
+                namespace: ${NAMESPACE}
+              spec:
+                deployment_name: ${DEPLOYMENT}
+                backup_pvc: ${SHARED_PVC}
+                clean_backup_on_delete: true
+                image_pull_policy: 'IfNotPresent'
+              EOF
+
+              # -------------------------------------------------------------
+              # STEP 2: RETENTION CLEANUP (OLDER THAN 30 DAYS)
+              # -------------------------------------------------------------
+              echo "INFO: Evaluating backup retention window..."
+
+              # Calculate the boundary date threshold in seconds
+              THRESHOLD_DATE=$(date -d "${RETENTION_DAYS} days ago" +%s)
+
+              # Fetch all AWXBackup resources and check their creation times
+              kubectl get awxbackup -n ${NAMESPACE} -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\n"}{end}' | \
+              while read -r name timestamp; do
+                if [ -z "$name" ] || [ -z "$timestamp" ]; then
+                  continue
+                fi
+
+                # Convert the ISO timestamp to Unix time
+                CREATION_SECONDS=$(date -d "$timestamp" +%s)
+
+                if [ "$CREATION_SECONDS" -lt "$THRESHOLD_DATE" ]; then
+                  echo "WARN: Backup '${name}' (Created: ${timestamp}) is older than ${RETENTION_DAYS} days. Purging..."
+                  kubectl delete awxbackup "${name}" -n ${NAMESPACE}
+                else
+                  echo "INFO: Backup '${name}' is within the retention period."
+                fi
+              done
+              echo "INFO: Backup and retention workflow complete."
